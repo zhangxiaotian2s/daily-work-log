@@ -10,6 +10,76 @@
 - 📊 **智能总结** — 一键生成结构化工作日志
 - 🔄 **跨会话汇总** — 多次会话的工作内容自动聚合
 - 🔌 **Hooks 增强** — 可选的原始事件采集
+- ⚙️ **灵活配置** — 支持自定义日志存储位置
+
+## 配置
+
+日志存储位置可通过 settings.json 配置。
+
+### 配置位置
+
+| 层级 | 文件路径 | 作用域 |
+|------|----------|--------|
+| 全局 | `~/.claude/settings.json` | 所有项目 |
+| 项目 | `.claude/settings.local.json` | 当前项目 |
+
+### 配置格式
+
+```json
+{
+  "skills": {
+    "daily-work-log": {
+      "logDir": "<日志目录路径>"
+    }
+  }
+}
+```
+
+### 优先级
+
+项目配置 > 全局配置 > 默认值 (`.work-log`)
+
+### 路径格式
+
+| 格式 | 说明 | 示例 |
+|------|------|------|
+| `~/` 开头 | 用户主目录 | `~/work-logs` → `/Users/user/work-logs` |
+| `/` 开头 | 绝对路径 | `/var/log/work` |
+| 其他 | 相对项目根目录 | `logs` → `${PROJECT_DIR}/logs` |
+
+### 配置示例
+
+**示例 1：集中管理所有项目日志**
+
+```json
+// ~/.claude/settings.json
+{
+  "skills": {
+    "daily-work-log": {
+      "logDir": "~/work-logs"
+    }
+  }
+}
+```
+
+结果：所有项目日志存入 `~/work-logs/`
+
+**示例 2：项目级自定义路径**
+
+```json
+// .claude/settings.local.json
+{
+  "skills": {
+    "daily-work-log": {
+      "logDir": "docs/logs"
+    }
+  }
+}
+```
+
+结果：当前项目日志存入 `${PROJECT_DIR}/docs/logs/`
+
+**默认行为：** 无配置时使用项目根目录的 `.work-log/`，保持向后兼容。
 
 ## 安装
 
@@ -28,7 +98,7 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 - 「开始记录」
 - 「daily log」
 
-激活后，每次完成任务时会自动记录摘要到 `.work-log/{日期}-sessions.md`。
+激活后，每次完成任务时会自动记录摘要到日志目录。默认路径为 `.work-log/{日期}-sessions.md`，可通过配置修改。
 
 ### 总结模式
 
@@ -38,7 +108,7 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 - 「今日总结」
 - 「daily summary`
 
-生成的报告保存在 `.work-log/{日期}-report.md`，包含：
+生成的报告保存在日志目录。默认路径为 `.work-log/{日期}-report.md`，可通过配置修改。包含：
 
 - 精简说明（所有任务的一句话概括）
 - 细节说明（每个任务的背景、操作、关键文件和决策）
@@ -59,13 +129,13 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 
 - 自动记录 `Edit`、`Write`、`Bash` 等工具调用
 - 异步执行，不消耗 token
-- 数据保存到 `.work-log/{日期}.jsonl`
+- 数据保存到日志目录。默认路径为 `.work-log/{日期}.jsonl`，可通过配置修改
 
 在 `SKILL.md` 中已配置 hook，需要你的 Claude Code 支持技能级 hooks。
 
 ## 工作日志存储
 
-所有日志存储在项目根目录的 `.work-log/` 目录：
+默认情况下，日志存储在项目根目录的 `.work-log/` 目录。可通过配置修改存储位置（见上方"配置"章节）。
 
 | 文件 | 说明 |
 |------|------|
@@ -73,7 +143,7 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 | `{日期}-report.md` | 每日工作总结报告 |
 | `{日期}.jsonl` | 原始工具调用事件（hooks 启用时） |
 
-建议将 `.work-log/` 加入 `.gitignore`。
+建议将日志目录加入 `.gitignore`。
 
 ## 技术原理
 
@@ -104,7 +174,7 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
          │ 追加写入
          ▼
 ┌─────────────────┐
-│ .work-log/     │
+│ 日志目录       │
 │ {日期}.jsonl   │
 └─────────────────┘
 ```
@@ -130,7 +200,7 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 
 ### 数据示例
 
-`.work-log/2026-05-31.jsonl` 内容示例：
+日志目录中的 `{日期}.jsonl` 内容示例（如 `2026-05-31.jsonl`）：
 
 ```jsonl
 {"tool":"Edit","time":"2026-05-31T08:15:30Z","input":{"file_path":"src/index.ts","old_string":"const foo = 1","new_string":"const foo = 2"}}

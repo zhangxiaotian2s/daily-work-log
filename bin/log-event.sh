@@ -10,6 +10,23 @@ INPUT=$(cat)
 # Determine project directory
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 
+# Function: read logDir from config file
+read_log_dir() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        dir=$(python3 -c "import sys,json; c=json.load(open('$file')); print(c.get('skills',{}).get('daily-work-log',{}).get('logDir',''))" 2>/dev/null || echo "")
+        if [[ -n "$dir" ]]; then
+            echo "$dir"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# Config file paths
+PROJECT_CONFIG="${PROJECT_DIR}/.claude/settings.local.json"
+GLOBAL_CONFIG="${HOME}/.claude/settings.json"
+
 # Extract tool_name from stdin JSON
 TOOL_NAME=$(printf '%s' "$INPUT" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read()).get("tool_name",""))' 2>/dev/null || echo "unknown")
 
@@ -36,8 +53,22 @@ print(json.dumps(result, ensure_ascii=False))
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 DATE=$(date +%Y-%m-%d)
 
-# Ensure .work-log directory exists
-LOG_DIR="${PROJECT_DIR}/.work-log"
+# Ensure log directory exists
+# Priority: project config > global config > default (.work-log)
+LOG_DIR=$(read_log_dir "$PROJECT_CONFIG" || read_log_dir "$GLOBAL_CONFIG" || echo ".work-log")
+
+# Path resolution: support ~ expansion, absolute path, relative path
+if [[ "$LOG_DIR" =~ ^~/ ]]; then
+    # ~/path → HOME/path
+    LOG_DIR="${HOME}/${LOG_DIR#\~/}"
+elif [[ "$LOG_DIR" =~ ^/ ]]; then
+    # Absolute path, keep as is
+    :
+else
+    # Relative path, relative to project root
+    LOG_DIR="${PROJECT_DIR}/${LOG_DIR}"
+fi
+
 mkdir -p "$LOG_DIR" 2>/dev/null || true
 
 # Append event to JSONL (one line per event)

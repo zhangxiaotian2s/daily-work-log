@@ -19,14 +19,34 @@ hooks:
 
 1. 获取当前日期 `DATE=$(date +%Y-%m-%d)`
 2. 确认项目目录 `${CLAUDE_PROJECT_DIR}`
-3. 检查 `.work-log/` 目录是否存在，不存在则创建：`mkdir -p .work-log`
-4. 确认文件 `.work-log/${DATE}-sessions.md` 是否存在
+3. 确定日志目录 `LOG_DIR`：
+   - 优先级：项目配置 > 全局配置 > 默认值 `.work-log`
+   - 配置位置：
+     - 项目：`.claude/settings.local.json`
+     - 全局：`~/.claude/settings.json`
+   - 配置格式：
+     ```json
+     {
+       "skills": {
+         "daily-work-log": {
+           "logDir": "<路径>"
+         }
+       }
+     }
+     ```
+   - 路径解析规则：
+     - `~/` 开头 → 用户主目录
+     - `/` 开头 → 绝对路径
+     - 其他 → 相对项目根目录
+4. 检查 `${LOG_DIR}` 目录是否存在，不存在则创建
+5. 如果目录创建失败，输出提示："无法创建日志目录 `${LOG_DIR}`，日志记录功能已禁用"
+6. 确认文件 `${LOG_DIR}/${DATE}-sessions.md` 是否存在
 
 ## 记录模式
 
 当用户说「记录工作」「开始记录」「daily log」时进入记录模式：
 
-1. 输出："📝 记录模式已激活。我会在完成每个任务后自动记录摘要到 `.work-log/${DATE}-sessions.md`。"
+1. 输出："📝 记录模式已激活。我会在完成每个任务后自动记录摘要到 `${LOG_DIR}/${DATE}-sessions.md`。"
 
 2. 在后续工作中，每当你识别到一个独立任务完成时，立即追加摘要到 `.work-log/${DATE}-sessions.md`。
 
@@ -63,15 +83,15 @@ hooks:
    - 否则使用当前日期
 
 2. 读取数据源（按优先级）：
-   a. 读取 `.work-log/${DATE}-sessions.md`（跨会话摘要）
+   a. 读取 `${LOG_DIR}/${DATE}-sessions.md`（跨会话摘要）
    b. 回顾当前会话上下文（本轮完整工作内容）
-   c. 如果存在 `.work-log/${DATE}.jsonl`（hooks 采集的原始事件），读取并参考
+   c. 如果存在 `${LOG_DIR}/${DATE}.jsonl`（hooks 采集的原始事件），读取并参考
 
 3. 如果三个数据源均为空，输出："今日暂未检测到明确的工作任务。" 并停止。
 
 4. 分析所有数据源内容，归纳分类为独立任务。
 
-5. 生成报告文件 `.work-log/${DATE}-report.md`，严格遵循以下模板：
+5. 生成报告文件 `${LOG_DIR}/${DATE}-report.md`，严格遵循以下模板：
 
 ```markdown
 # 工作日志 YYYY-MM-DD
@@ -105,12 +125,12 @@ hooks:
 
 7. 报告生成后，将本次会话的摘要也追加到 `.work-log/${DATE}-sessions.md`，确保后续会话可参考。
 
-8. 输出报告路径给用户："📄 今日工作日志已生成：`.work-log/${DATE}-report.md`"
+8. 输出报告路径给用户："📄 今日工作日志已生成：`${LOG_DIR}/${DATE}-report.md`"
 
 ## 错误处理
 
 - `sessions.md` 不存在 → 跳过该数据源，仅基于当前会话上下文生成
-- `.work-log/` 创建失败 → 提示"无法创建 `.work-log/` 目录，请检查项目目录权限"
+- `${LOG_DIR}` 创建失败 → 提示"无法创建日志目录，请检查项目目录权限"
 - 指定日期无任何记录 → 提示"该日期暂无工作记录"
 - 当前会话无明显工作任务 → 提示"今日暂未检测到明确的工作任务"
 
@@ -119,5 +139,5 @@ hooks:
 - 所有文件默认中文输出
 - `sessions.md` 单个摘要条目不超过 200 字
 - `report.md` 细节说明每个任务不超过 500 字
-- `.work-log/` 建议加入 `.gitignore`
+- `${LOG_DIR}` 建议加入 `.gitignore`（如使用默认的 `.work-log` 或相对路径）
 - 摘要追加时使用 Edit 工具而非 Write，避免覆盖已有内容

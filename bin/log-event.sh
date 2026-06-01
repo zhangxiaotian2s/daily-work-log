@@ -13,8 +13,9 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 # Function: read logDir from config file
 read_log_dir() {
     local file="$1"
+    local key="$2"
     if [[ -f "$file" ]]; then
-        dir=$(python3 -c "import sys,json; c=json.load(open('$file')); print(c.get('skills',{}).get('daily-work-log',{}).get('logDir',''))" 2>/dev/null || echo "")
+        dir=$(python3 -c "import sys,json; print(json.load(open('$file')).get('$key',''))" 2>/dev/null || echo "")
         if [[ -n "$dir" ]]; then
             echo "$dir"
             return 0
@@ -23,9 +24,10 @@ read_log_dir() {
     return 1
 }
 
-# Config file paths
+# Config file paths (priority: project > global > default)
 PROJECT_CONFIG="${PROJECT_DIR}/.claude/settings.local.json"
 GLOBAL_CONFIG="${HOME}/.claude/settings.json"
+SKILL_CONFIG="${HOME}/.claude/daily-work-log.json"
 
 # Extract tool_name from stdin JSON
 TOOL_NAME=$(printf '%s' "$INPUT" | python3 -c 'import sys,json; print(json.loads(sys.stdin.read()).get("tool_name",""))' 2>/dev/null || echo "unknown")
@@ -54,8 +56,8 @@ TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 DATE=$(date +%Y-%m-%d)
 
 # Ensure log directory exists
-# Priority: project config > global config > default (.work-log)
-LOG_DIR=$(read_log_dir "$PROJECT_CONFIG" || read_log_dir "$GLOBAL_CONFIG" || echo ".work-log")
+# Priority: skill config > project config > global config > default (.work-log)
+LOG_DIR=$(read_log_dir "$SKILL_CONFIG" "logDir" || read_log_dir "$PROJECT_CONFIG" "logDir" || read_log_dir "$GLOBAL_CONFIG" "logDir" || echo ".work-log")
 
 # Path resolution: support ~ expansion, absolute path, relative path
 if [[ "$LOG_DIR" =~ ^~/ ]]; then

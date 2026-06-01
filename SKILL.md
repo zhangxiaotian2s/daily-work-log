@@ -20,18 +20,15 @@ hooks:
 1. 获取当前日期 `DATE=$(date +%Y-%m-%d)`
 2. 确认项目目录 `${CLAUDE_PROJECT_DIR}`
 3. 确定日志目录 `LOG_DIR`：
-   - 优先级：项目配置 > 全局配置 > 默认值 `.work-log`
-   - 配置位置：
+   - 优先级：skill 配置 > 项目配置 > 全局配置 > 默认值 `.work-log`
+   - 配置位置（推荐使用 skill 配置文件）：
+     - **推荐**：`~/.claude/daily-work-log.json`（skill 专用配置）
      - 项目：`.claude/settings.local.json`
      - 全局：`~/.claude/settings.json`
-   - 配置格式：
+   - 配置格式（推荐）：
      ```json
      {
-       "skills": {
-         "daily-work-log": {
-           "logDir": "<路径>"
-         }
-       }
+       "logDir": "<路径>"
      }
      ```
    - 路径解析规则：

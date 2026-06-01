@@ -14,30 +14,25 @@
 
 ## 配置
 
-日志存储位置可通过 settings.json 配置。
+日志存储位置可通过配置文件设置。
 
 ### 配置位置
 
-| 层级 | 文件路径 | 作用域 |
-|------|----------|--------|
-| 全局 | `~/.claude/settings.json` | 所有项目 |
-| 项目 | `.claude/settings.local.json` | 当前项目 |
+| 层级 | 文件路径 | 作用域 | 优先级 |
+|------|----------|--------|--------|
+| **推荐** | `~/.claude/daily-work-log.json` | 所有项目 | 最高 |
+| 全局 | `~/.claude/settings.json` | 所有项目 | 中 |
+| 项目 | `.claude/settings.local.json` | 当前项目 | 低 |
 
-### 配置格式
+### 配置格式（推荐）
+
+创建 `~/.claude/daily-work-log.json`：
 
 ```json
 {
-  "skills": {
-    "daily-work-log": {
-      "logDir": "<日志目录路径>"
-    }
-  }
+  "logDir": "<日志目录路径>"
 }
 ```
-
-### 优先级
-
-项目配置 > 全局配置 > 默认值 (`.work-log`)
 
 ### 路径格式
 
@@ -49,31 +44,32 @@
 
 ### 配置示例
 
-**示例 1：集中管理所有项目日志**
+**示例 1：集中管理所有项目日志（推荐）**
 
 ```json
-// ~/.claude/settings.json
+// ~/.claude/daily-work-log.json
 {
-  "skills": {
-    "daily-work-log": {
-      "logDir": "~/work-logs"
-    }
-  }
+  "logDir": "~/work-logs"
 }
 ```
 
 结果：所有项目日志存入 `~/work-logs/`
 
-**示例 2：项目级自定义路径**
+**示例 2：使用绝对路径**
+
+```json
+// ~/.claude/daily-work-log.json
+{
+  "logDir": "/Users/xxxxx/work/work-log"
+}
+```
+
+**示例 3：项目级自定义路径**
 
 ```json
 // .claude/settings.local.json
 {
-  "skills": {
-    "daily-work-log": {
-      "logDir": "docs/logs"
-    }
-  }
+  "logDir": "docs/logs"
 }
 ```
 

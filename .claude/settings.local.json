@@ -6,7 +6,19 @@
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
       "Bash(git remote:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(bash:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir -p ~/.claude)",
+      "Read(//Users/zhangxiaotian/.claude/**)",
+      "Skill(daily-work-log)",
+      "Bash(mkdir -p /Users/zhangxiaotian/work/work-log/2026-06-12)",
+      "Read(//Users/zhangxiaotian/work/work-log/**)",
+      "Bash(cp ~/.claude/skills/daily-work-log/SKILL.md ./SKILL.md)",
+      "Bash(cp ~/.claude/skills/daily-work-log/README.md ./README.md)",
+      "Bash(cp ~/.claude/skills/daily-work-log/DESIGN.md ./DESIGN.md)",
+      "Bash(cp ~/.claude/skills/daily-work-log/PLAN.md ./PLAN.md)",
+      "Bash(cp ~/.claude/skills/daily-work-log/bin/log-event.sh ./bin/log-event.sh)"
     ]
   }
 }

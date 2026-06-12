@@ -9,6 +9,8 @@
 - 📝 **自动记录** — 完成任务后自动记录摘要
 - 📊 **智能总结** — 一键生成结构化工作日志
 - 🔄 **跨会话汇总** — 多次会话的工作内容自动聚合
+- 🗂️ **多项目隔离** — 按日期分目录、按项目分文件，互不干扰
+- 🔍 **轻量过滤** — 自动跳过纯格式化、纯 git 操作等无实质成果的任务
 - 🔌 **Hooks 增强** — 可选的原始事件采集
 - ⚙️ **灵活配置** — 支持自定义日志存储位置
 
@@ -21,8 +23,8 @@
 | 层级 | 文件路径 | 作用域 | 优先级 |
 |------|----------|--------|--------|
 | **推荐** | `~/.claude/daily-work-log.json` | 所有项目 | 最高 |
-| 全局 | `~/.claude/settings.json` | 所有项目 | 中 |
-| 项目 | `.claude/settings.local.json` | 当前项目 | 低 |
+| 项目 | `.claude/settings.local.json` | 当前项目 | 中 |
+| 全局 | `~/.claude/settings.json` | 所有项目 | 低 |
 
 ### 配置格式（推荐）
 
@@ -60,7 +62,7 @@
 ```json
 // ~/.claude/daily-work-log.json
 {
-  "logDir": "/Users/xxxxx/work/work-log"
+  "logDir": "/Users/<your-name>/work/work-log"
 }
 ```
 
@@ -94,7 +96,9 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 - 「开始记录」
 - 「daily log」
 
-激活后，每次完成任务时会自动记录摘要到日志目录。默认路径为 `.work-log/{日期}-sessions.md`，可通过配置修改。
+激活后，每次完成有实质性成果的任务（设计决策、代码逻辑变更、问题排查等）时自动记录摘要。纯格式化、纯 git 操作等无实质成果的任务会被轻量过滤跳过。
+
+日志按日期分目录、按项目分文件存储，默认路径为 `.work-log/{日期}/{项目名}-sessions.md`，可通过配置修改。多项目互不干扰。
 
 ### 总结模式
 
@@ -102,13 +106,19 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 
 - 「总结今日工作」
 - 「今日总结」
-- 「daily summary`
+- 「daily summary」
 
-生成的报告保存在日志目录。默认路径为 `.work-log/{日期}-report.md`，可通过配置修改。包含：
+生成的报告保存在日志目录。默认路径为 `.work-log/{日期}/{日期}-report.md`，可通过配置修改。总结时会：
 
-- 精简说明（所有任务的一句话概括）
+- 遍历当日所有项目的 `*-sessions.md`，按项目分组归纳
+- 进行二次筛选，过滤低价值条目
+- 结合 hooks 采集的原始事件（如有）和当前会话上下文
+
+报告包含：
+
+- 精简说明（按项目分组，每个任务一句话概括）
 - 细节说明（每个任务的背景、操作、关键文件和决策）
-- 今日统计（任务数、文件数、决策数）
+- 今日统计（项目数、任务数、文件数、决策数）
 
 ### 指定日期总结
 
@@ -125,19 +135,28 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 
 - 自动记录 `Edit`、`Write`、`Bash` 等工具调用
 - 异步执行，不消耗 token
-- 数据保存到日志目录。默认路径为 `.work-log/{日期}.jsonl`，可通过配置修改
+- 数据保存到日志目录。默认路径为 `.work-log/{日期}/{日期}.jsonl`，可通过配置修改
 
 在 `SKILL.md` 中已配置 hook，需要你的 Claude Code 支持技能级 hooks。
 
 ## 工作日志存储
 
-默认情况下，日志存储在项目根目录的 `.work-log/` 目录。可通过配置修改存储位置（见上方"配置"章节）。
+默认情况下，日志存储在项目根目录的 `.work-log/` 目录，按日期分子目录。可通过配置修改存储位置（见上方"配置"章节）。
+
+```
+.work-log/
+└── 2026-06-12/                    # 按日期分目录
+    ├── daily-work-log-sessions.md # 项目 A 的任务摘要
+    ├── web-app-sessions.md        # 项目 B 的任务摘要
+    ├── 2026-06-12-report.md       # 当日总结报告（含所有项目）
+    └── 2026-06-12.jsonl           # 原始工具调用事件（hooks 启用时）
+```
 
 | 文件 | 说明 |
 |------|------|
-| `{日期}-sessions.md` | 跨会话任务摘要 |
-| `{日期}-report.md` | 每日工作总结报告 |
-| `{日期}.jsonl` | 原始工具调用事件（hooks 启用时） |
+| `{日期}/{项目名}-sessions.md` | 各项目的跨会话任务摘要 |
+| `{日期}/{日期}-report.md` | 每日工作总结报告（汇总所有项目） |
+| `{日期}/{日期}.jsonl` | 原始工具调用事件（hooks 启用时） |
 
 建议将日志目录加入 `.gitignore`。
 
@@ -171,7 +190,7 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
          ▼
 ┌─────────────────┐
 │ 日志目录       │
-│ {日期}.jsonl   │
+│ {日期}/{日期}.jsonl │
 └─────────────────┘
 ```
 
@@ -196,12 +215,12 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 
 ### 数据示例
 
-日志目录中的 `{日期}.jsonl` 内容示例（如 `2026-05-31.jsonl`）：
+日志目录中的 `{日期}/{日期}.jsonl` 内容示例（如 `2026-06-12/2026-06-12.jsonl`）：
 
 ```jsonl
-{"tool":"Edit","time":"2026-05-31T08:15:30Z","input":{"file_path":"src/index.ts","old_string":"const foo = 1","new_string":"const foo = 2"}}
-{"tool":"Bash","time":"2026-05-31T08:16:45Z","input":{"command":"npm test"}}
-{"tool":"Write","time":"2026-05-31T09:20:10Z","input":{"file_path":"docs/api.md","content_length":1234}}
+{"tool":"Edit","time":"2026-06-12T08:15:30Z","input":{"file_path":"src/index.ts","old_string":"const foo = 1","new_string":"const foo = 2"}}
+{"tool":"Bash","time":"2026-06-12T08:16:45Z","input":{"command":"npm test"}}
+{"tool":"Write","time":"2026-06-12T09:20:10Z","input":{"file_path":"docs/api.md","content_length":1234}}
 ```
 
 这些原始数据在总结模式下会被读取，用于生成更完整的工作日志报告。
@@ -211,6 +230,9 @@ cp -r ~/.claude/skills/daily-work-log .claude/skills/
 ```
 daily-work-log/
 ├── SKILL.md          # 技能定义和触发逻辑
+├── DESIGN.md         # 设计文档
+├── PLAN.md           # 实现计划
+├── README.md         # 项目说明
 └── bin/
     └── log-event.sh  # PostToolUse hook 脚本
 ```

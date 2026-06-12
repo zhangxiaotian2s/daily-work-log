@@ -55,6 +55,9 @@ print(json.dumps(result, ensure_ascii=False))
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 DATE=$(date +%Y-%m-%d)
 
+# Determine project name from CLAUDE_PROJECT_DIR basename
+PROJECT_NAME=$(basename "${CLAUDE_PROJECT_DIR:-default}")
+
 # Ensure log directory exists
 # Priority: skill config > project config > global config > default (.work-log)
 LOG_DIR=$(read_log_dir "$SKILL_CONFIG" "logDir" || read_log_dir "$PROJECT_CONFIG" "logDir" || read_log_dir "$GLOBAL_CONFIG" "logDir" || echo ".work-log")
@@ -71,10 +74,12 @@ else
     LOG_DIR="${PROJECT_DIR}/${LOG_DIR}"
 fi
 
-mkdir -p "$LOG_DIR" 2>/dev/null || true
+# Create date subdirectory
+DAY_DIR="${LOG_DIR}/${DATE}"
+mkdir -p "$DAY_DIR" 2>/dev/null || true
 
-# Append event to JSONL (one line per event)
-printf '{"tool":"%s","time":"%s","input":%s}\n' "$TOOL_NAME" "$TIMESTAMP" "$TOOL_INPUT" >> "${LOG_DIR}/${DATE}.jsonl" 2>/dev/null || true
+# Append event to JSONL (one line per event, with project field)
+printf '{"tool":"%s","time":"%s","project":"%s","input":%s}\n' "$TOOL_NAME" "$TIMESTAMP" "$PROJECT_NAME" "$TOOL_INPUT" >> "${DAY_DIR}/${DATE}.jsonl" 2>/dev/null || true
 
 # Silent exit — no stdout output
 exit 0
